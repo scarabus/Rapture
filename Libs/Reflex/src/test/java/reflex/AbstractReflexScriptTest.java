@@ -56,7 +56,7 @@ public abstract class AbstractReflexScriptTest {
 			public void setApi(ScriptingApi api) {
 			}
 		});
-
+		
 		if (injectedVars != null && !injectedVars.isEmpty()) {
 			for (Map.Entry<String, Object> kv : injectedVars.entrySet()) {
 				walker.currentScope.assign(kv.getKey(),

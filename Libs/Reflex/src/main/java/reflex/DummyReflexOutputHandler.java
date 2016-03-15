@@ -26,7 +26,6 @@ package reflex;
 import org.apache.log4j.Logger;
 
 import rapture.common.api.ScriptingApi;
-import rapture.common.impl.jackson.JacksonUtil;
 
 public class DummyReflexOutputHandler implements IReflexOutputHandler {
     private static final Logger logger = Logger.getLogger(DummyReflexOutputHandler.class);

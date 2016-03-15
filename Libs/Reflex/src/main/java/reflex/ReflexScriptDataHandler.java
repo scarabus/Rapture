@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import rapture.common.RaptureURI;
 import rapture.common.api.ScriptingApi;
 import rapture.common.impl.jackson.JacksonUtil;
 import rapture.common.model.DocumentWithMeta;
@@ -36,7 +35,6 @@ import rapture.common.uri.URIParser;
 import rapture.util.StringUtil;
 import rapture.util.TypeUtil;
 import reflex.node.KernelExecutor;
-import reflex.value.ReflexValue;
 
 public class ReflexScriptDataHandler extends AbstractReflexDataHandler implements IReflexScriptHandler {
 

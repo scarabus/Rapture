@@ -26,14 +26,14 @@ package reflex.file;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.net.MediaType;
+
 import reflex.IReflexIOHandler;
 import reflex.IReflexLineCallback;
 import reflex.node.io.FileReadAdapter;
 import reflex.value.ReflexStreamValue;
 import reflex.value.ReflexValue;
 import reflex.value.internal.ReflexVoidValue;
-
-import com.google.common.net.MediaType;
 
 public class CSVFileReadAdapter implements FileReadAdapter {
     private String fieldSep = ",";

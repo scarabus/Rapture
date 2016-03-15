@@ -26,6 +26,8 @@ package reflex.node.functional;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.collect.Table.Cell;
+
 import reflex.Function;
 import reflex.IReflexHandler;
 import reflex.Scope;
@@ -39,8 +41,6 @@ import reflex.util.function.LanguageRegistry;
 import reflex.value.ReflexSparseMatrixValue;
 import reflex.value.ReflexValue;
 import reflex.value.internal.ReflexNullValue;
-
-import com.google.common.collect.Table.Cell;
 
 public class MapFnNode extends BaseNode {
 

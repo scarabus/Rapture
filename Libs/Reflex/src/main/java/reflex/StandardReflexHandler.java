@@ -24,7 +24,6 @@
 package reflex;
 
 import rapture.common.api.ScriptingApi;
-
 import reflex.cache.DefaultReflexCacheHandler;
 
 public class StandardReflexHandler implements IReflexHandler {

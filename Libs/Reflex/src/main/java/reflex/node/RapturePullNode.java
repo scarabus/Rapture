@@ -26,8 +26,6 @@ package reflex.node;
 import java.util.HashMap;
 import java.util.List;
 
-import rapture.common.RaptureSheetCell;
-import rapture.common.RaptureSheetStatus;
 import rapture.common.RaptureURI;
 import rapture.common.SeriesPoint;
 import rapture.common.impl.jackson.JacksonUtil;

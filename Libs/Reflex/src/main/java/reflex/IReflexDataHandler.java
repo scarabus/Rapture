@@ -26,11 +26,11 @@ package reflex;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.net.MediaType;
+
 import rapture.common.RaptureURI;
 import rapture.common.api.ScriptingApi;
 import reflex.value.ReflexValue;
-
-import com.google.common.net.MediaType;
 
 /**
  * A ReflexDataHandler is passed by the program invoking the walk, and actions

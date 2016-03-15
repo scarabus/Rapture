@@ -31,6 +31,8 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
+import com.google.common.net.MediaType;
+
 import rapture.common.RaptureURI;
 import rapture.common.Scheme;
 import rapture.common.exception.RaptureException;
@@ -42,8 +44,6 @@ import reflex.value.ReflexByteArrayValue;
 import reflex.value.ReflexStreamValue;
 import reflex.value.ReflexValue;
 import reflex.value.internal.ReflexVoidValue;
-
-import com.google.common.net.MediaType;
 
 public class PushNode extends BaseNode {
     private ReflexNode toSaveNode;

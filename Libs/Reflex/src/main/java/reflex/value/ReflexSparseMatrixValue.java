@@ -28,12 +28,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import reflex.value.internal.ReflexNullValue;
-
 import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
 import com.google.common.collect.Tables;
 import com.google.common.collect.TreeBasedTable;
+
+import reflex.value.internal.ReflexNullValue;
 
 /**
  * For now, implement a sparse matrix as simply a list

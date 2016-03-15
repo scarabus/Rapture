@@ -35,7 +35,6 @@ import reflex.structure.Structure;
 import reflex.util.function.LanguageRegistry;
 import reflex.util.function.StructureFactory;
 import reflex.util.function.StructureKey;
-import reflex.value.ReflexStructValue;
 import reflex.value.ReflexValue;
 import reflex.value.internal.ReflexNullValue;
 

@@ -23,8 +23,6 @@
  */
 package reflex.node;
 
-import java.math.BigDecimal;
-
 import reflex.IReflexHandler;
 import reflex.Scope;
 import reflex.debug.IReflexDebugger;

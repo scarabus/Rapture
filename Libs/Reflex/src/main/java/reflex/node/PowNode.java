@@ -26,7 +26,6 @@ package reflex.node;
 import java.math.BigDecimal;
 import java.math.MathContext;
 
-import rapture.common.RaptureConstants;
 import reflex.IReflexHandler;
 import reflex.Scope;
 import reflex.debug.IReflexDebugger;

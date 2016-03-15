@@ -25,8 +25,8 @@ package reflex;
 
 import org.antlr.runtime.RecognitionException;
 import org.apache.log4j.BasicConfigurator;
-import org.junit.Test;
 import org.junit.Before;
+import org.junit.Test;
 
 public class UrlEncoderTest extends ResourceBasedTest {
     @Before

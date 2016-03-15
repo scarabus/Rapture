@@ -3,24 +3,9 @@ package reflex;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Map;
-
-import org.antlr.runtime.ANTLRStringStream;
-import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.RecognitionException;
-import org.antlr.runtime.tree.CommonTree;
-import org.antlr.runtime.tree.CommonTreeNodeStream;
-import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Logger;
-import org.apache.log4j.spi.LoggingEvent;
 import org.junit.Test;
-
-import rapture.common.api.ScriptingApi;
-import reflex.node.MatchNode;
-import reflex.node.ReflexNode;
-import reflex.util.InstrumentDebugger;
-import reflex.value.ReflexValue;
-import reflex.value.internal.ReflexNullValue;
 
 public class MatchTest extends AbstractReflexScriptTest {
 	private static Logger log = Logger.getLogger(MatchTest.class);

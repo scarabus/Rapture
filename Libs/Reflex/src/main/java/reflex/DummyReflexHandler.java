@@ -24,7 +24,6 @@
 package reflex;
 
 import rapture.common.api.ScriptingApi;
-
 import reflex.cache.DefaultReflexCacheHandler;
 
 public class DummyReflexHandler implements IReflexHandler {
@@ -42,7 +41,12 @@ public class DummyReflexHandler implements IReflexHandler {
     private ScriptingApi api = null;
     private ScriptingApi originalApi = null;
 
-    @Override
+    public DummyReflexHandler() {
+		super();
+		System.out.println("DummyReflexHandler");
+	}
+
+	@Override
     public ScriptingApi getApi() {
         return api;
     }

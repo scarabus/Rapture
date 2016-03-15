@@ -23,11 +23,11 @@
  */
 package reflex.node.io;
 
+import com.google.common.net.MediaType;
+
 import reflex.IReflexIOHandler;
 import reflex.value.ReflexStreamValue;
 import reflex.value.ReflexValue;
-
-import com.google.common.net.MediaType;
 
 /*
  * Used to adapt a line from a file into something else.

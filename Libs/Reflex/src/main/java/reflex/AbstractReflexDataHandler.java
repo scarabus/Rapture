@@ -31,6 +31,8 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
+import com.google.common.net.MediaType;
+
 import rapture.common.BlobContainer;
 import rapture.common.RaptureURI;
 import rapture.common.SeriesPoint;
@@ -40,8 +42,6 @@ import reflex.node.KernelExecutor;
 import reflex.util.MapConverter;
 import reflex.value.ReflexValue;
 import reflex.value.internal.ReflexNullValue;
-
-import com.google.common.net.MediaType;
 
 public abstract class AbstractReflexDataHandler implements IReflexDataHandler {
 

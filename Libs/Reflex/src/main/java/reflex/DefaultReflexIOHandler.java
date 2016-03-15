@@ -36,6 +36,9 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 
+import com.google.common.io.CharStreams;
+import com.google.common.io.LineProcessor;
+
 import rapture.common.exception.RaptureExceptionFactory;
 import reflex.value.ReflexArchiveFileValue;
 import reflex.value.ReflexFileValue;
@@ -45,9 +48,6 @@ import reflex.value.internal.ReflexNullValue;
 import reflex.value.internal.ReflexVoidValue;
 import reflex.zip.ReadZipHandler;
 import reflex.zip.WriteZipHandler;
-
-import com.google.common.io.CharStreams;
-import com.google.common.io.LineProcessor;
 
 public class DefaultReflexIOHandler implements IReflexIOHandler {
 

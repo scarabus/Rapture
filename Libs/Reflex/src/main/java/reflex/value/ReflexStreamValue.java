@@ -25,11 +25,11 @@ package reflex.value;
 
 import java.io.InputStream;
 
+import com.google.common.net.MediaType;
+
 import reflex.file.DummyFileReadAdapter;
 import reflex.file.FileReadAdapterFactory;
 import reflex.node.io.FileReadAdapter;
-
-import com.google.common.net.MediaType;
 
 /**
  * A Reflex Stream Value is abstract - it's like a file but we return a stream

@@ -23,10 +23,9 @@
  */
 package reflex.node;
 
-import rapture.common.RaptureConstants;
-
 import org.apache.log4j.Logger;
 
+import rapture.common.RaptureConstants;
 import reflex.IReflexHandler;
 import reflex.ReflexException;
 import reflex.Scope;
