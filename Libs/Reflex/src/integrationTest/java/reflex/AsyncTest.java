@@ -12,6 +12,9 @@
  */
 package reflex;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.junit.Before;
@@ -65,5 +68,13 @@ public class AsyncTest extends ResourceBasedTest {
     @Test
     public void runCallOnServerAndWaitTest() throws RecognitionException {
         runTestFor("/async/callOnServerAndWait.rfx");
+    }
+
+    @Test
+    public void RAP3504() throws RecognitionException {
+        String output = runTestFor("/async/RAP3504.rfx");
+        assertNotNull(output);
+        String workOrderStatus = output.split("[{}]")[1];
+        assertEquals("workerIds=[0], status=FINISHED, CLASS=rapture.common.dp.WorkOrderStatus", workOrderStatus);
     }
 }
