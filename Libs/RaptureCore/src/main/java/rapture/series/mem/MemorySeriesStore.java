@@ -289,8 +289,7 @@ public class MemorySeriesStore implements SeriesStore {
     @Override
     public SeriesValue getLastPoint(String key) {
         SortedMap<String, SeriesValue> map = getSeries(key);
-        String lastKey = map.lastKey();
-        return map.get(lastKey);
+        return (map == null) ? null : map.get(map.lastKey());
     }
 
     @Override

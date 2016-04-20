@@ -113,8 +113,9 @@ public abstract class KernelBase {
     List<String> recursiveDelete(CallingContext context, RaptureURI uri, RecursiveHelper helper) {
         Map<String, RaptureFolderInfo> docs = null;
         List<String> removed = new ArrayList<>();
-        String duri = uri.toString();
-        while (duri.lastIndexOf('/') > 0) {
+        String duri = uri.toShortString();
+        int authStart = uri.getScheme().toString().length()+3;
+        while (duri.lastIndexOf('/') > authStart) {
             duri = duri.substring(0, duri.lastIndexOf('/'));
             docs = helper.listByPrefix(context, duri, 2);
             if (docs.size() == 0) {

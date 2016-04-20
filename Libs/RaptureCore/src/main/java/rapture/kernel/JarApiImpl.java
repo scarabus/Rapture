@@ -94,7 +94,11 @@ public class JarApiImpl extends KernelBase implements JarApi {
         BlobRepo blobRepo = Kernel.getRepoCacheManager().getBlobRepo(RaptureConstants.JAR_REPO);
         if (blobRepo == null) throw RaptureExceptionFactory.create(HttpURLConnection.HTTP_BAD_REQUEST, apiMessageCatalog.getMessage("NoSuchRepo", "Jar")); //$NON-NLS-1$
 
-        blobApi.deleteBlob(ContextFactory.getKernelUser(), getBlobUriFromJarUri(jarUri));
+        try {
+            blobApi.deleteBlob(ContextFactory.getKernelUser(), getBlobUriFromJarUri(jarUri));
+        } catch (RaptureException e) {
+            throw RaptureExceptionFactory.create(HttpURLConnection.HTTP_BAD_REQUEST, apiMessageCatalog.getMessage("NoSuchJar", jarUri.toString())); //$NON-NLS-1$
+        }
     }
 
     @Override

@@ -399,6 +399,27 @@ public class DocApiFileTest extends AbstractFileTest {
         } catch (IOException e) {
         }
     }
+    
+    @Test
+    public void testDocAndFolderWithSameName() {
+
+        testCreateAndGetRepo();
+        //create document and putDoc
+        String docUri1 = docAuthorityURI + "/foo/bar";
+        docImpl.putDoc(callingContext, docUri1, "{\"key\":\"value\"}");
+
+        String docUri2 = docAuthorityURI + "/foo/bar/baz";
+        docImpl.putDoc(callingContext, docUri2, "{\"key\":\"value\"}");
+
+        Map<String, RaptureFolderInfo> map = docImpl.listDocsByUriPrefix(callingContext, docAuthorityURI + "/foo/bar", -1);
+        System.out.println(JacksonUtil.jsonFromObject(map));
+        assertEquals(3, map.size());
+        
+        List<String> gone = docImpl.deleteDocsByUriPrefix(callingContext, docUri1, false);
+        assertEquals(1, gone.size());
+
+    }
+    
 
     @Test
     public void testRap3532() {

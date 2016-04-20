@@ -52,6 +52,7 @@ import com.mongodb.client.MongoCollection;
 
 import rapture.audit.AuditLog;
 import rapture.audit.AuditLogFactory;
+import rapture.blob.file.FileBlobStore;
 import rapture.common.BlobContainer;
 import rapture.common.CallingContext;
 import rapture.common.RaptureFolderInfo;
@@ -75,6 +76,7 @@ import rapture.common.client.HttpLoginApi;
 import rapture.common.client.HttpScriptApi;
 import rapture.common.client.HttpSeriesApi;
 import rapture.common.client.SimpleCredentialsProvider;
+import rapture.common.exception.ExceptionToString;
 import rapture.common.exception.RaptureException;
 import rapture.common.model.AuditLogEntry;
 import rapture.common.model.BlobRepoConfig;
@@ -348,7 +350,7 @@ public class MongoTests {
         String blobURI5 = blobAuthorityURI + "/PacMan/Wocka/Wocka/Wocka/Sue";
 
         blobImpl.putBlob(callingContext, blobURI1, sample, MediaType.CSS_UTF_8.toString());
-        blobImpl.putBlob(callingContext, blobURI2, sample, MediaType.EOT.toString());
+        blobImpl.putBlob(callingContext, blobURI2, sample, MediaType.ANY_TYPE.toString());
         blobImpl.putBlob(callingContext, blobURI3, sample, MediaType.GIF.toString());
         blobImpl.putBlob(callingContext, blobURI4, sample, MediaType.JPEG.toString());
 
@@ -373,12 +375,10 @@ public class MongoTests {
         assertArrayEquals(sample, blob.getContent());
         assertNull(blobImpl.getBlob(callingContext, blobURI4));
 
-        try {
-            blobImpl.deleteBlobsByUriPrefix(callingContext, blobURI5, false);
-            // SHOULD FAIL OR DO NOTHING
-        } catch (Exception e) {
-            assertEquals("Blob or folder " + blobURI5 + " does not exist", e.getMessage());
-        }
+        List<String> deleted = blobImpl.deleteBlobsByUriPrefix(callingContext, blobURI5, false);
+        assertNotNull(deleted);
+        assertTrue(deleted.isEmpty());
+    
         blob = blobImpl.getBlob(callingContext, blobURI1);
         assertNotNull(blob);
         assertNotNull(blob.getContent());
@@ -387,6 +387,7 @@ public class MongoTests {
 
     @Test
     public void testRap3952() {
+                
         CallingContext callingContext = ContextFactory.getKernelUser();
         Kernel.initBootstrap();
         String uuid = UUID.randomUUID().toString();
@@ -396,12 +397,9 @@ public class MongoTests {
             String auth = Scheme.BLOB.toString() + "://" + uuid;
             impl.createBlobRepo(callingContext, auth, "BLOB {} USING MONGODB {prefix=\"" + uuid + "\"}", "NREP {} USING MONGODB {prefix=\"Meta" + uuid + "\"}");
             assertNotNull(impl.getBlobRepoConfig(callingContext, auth));
-            try {
-                impl.deleteBlobsByUriPrefix(callingContext, auth + "/spurious", false);
-                Assert.fail("Exception expected");
-            } catch (Exception e) {
-                assertEquals("Blob or folder " + auth + "/spurious does not exist", e.getMessage());
-            }
+            List<String> deleted = impl.deleteBlobsByUriPrefix(callingContext, auth + "/spurious", false);
+            assertNotNull(deleted);
+            assertTrue(deleted.isEmpty());
         }
 
         {
@@ -409,12 +407,9 @@ public class MongoTests {
             String auth = Scheme.DOCUMENT.toString() + "://" + uuid;
             impl.createDocRepo(callingContext, auth, "NREP {} USING MONGODB {prefix=\"" + uuid + "\"}");
             assertNotNull(impl.getDocRepoConfig(callingContext, auth));
-            try {
-                impl.deleteDocsByUriPrefix(callingContext, auth + "/spurious", false);
-                Assert.fail("Exception expected");
-            } catch (Exception e) {
-                assertEquals("Document or folder " + auth + "/spurious does not exist", e.getMessage());
-            }
+            List<String> deleted = impl.deleteDocsByUriPrefix(callingContext, auth + "/spurious", false);
+            assertNotNull(deleted);
+            assertTrue(deleted.isEmpty());
         }
 
         {
@@ -422,23 +417,17 @@ public class MongoTests {
             String auth = Scheme.SERIES.toString() + "://" + uuid;
             impl.createSeriesRepo(callingContext, auth, "SREP {} USING MONGODB {prefix=\"" + uuid + "\"}");
             assertNotNull(impl.getSeriesRepoConfig(callingContext, auth));
-            try {
-                impl.deleteSeriesByUriPrefix(callingContext, auth + "/spurious", false);
-                Assert.fail("Exception expected");
-            } catch (Exception e) {
-                assertEquals("Series or folder " + auth + "/spurious does not exist", e.getMessage());
-            }
+            List<String> deleted = impl.deleteSeriesByUriPrefix(callingContext, auth + "/spurious", false);
+            assertNotNull(deleted);
+            assertTrue(deleted.isEmpty());
         }
 
         {
             ScriptApi impl = Kernel.getScript();
             String auth = Scheme.SCRIPT.toString() + "://" + uuid;
-            try {
-                impl.deleteScriptsByUriPrefix(callingContext, auth + "/spurious", false);
-                Assert.fail("Exception expected");
-            } catch (Exception e) {
-                assertEquals("Script or folder " + auth + "/spurious does not exist", e.getMessage());
-            }
+            List<String> deleted = impl.deleteScriptsByUriPrefix(callingContext, auth + "/spurious", false);
+            assertNotNull(deleted);
+            assertTrue(deleted.isEmpty());
         }
         
         {
@@ -465,7 +454,7 @@ public class MongoTests {
                 impl.deleteJar(callingContext, auth + "/spurious");
                 Assert.fail("Exception expected");
             } catch (Exception e) {
-                assertEquals("Blob or folder " + auth + "/spurious does not exist", e.getMessage());
+                assertEquals(ExceptionToString.format(e), "Jar " + auth + "/spurious does not exist", e.getMessage());
             }
         }
     }
@@ -491,12 +480,9 @@ public class MongoTests {
             String auth = Scheme.DOCUMENT.toString() + "://" + uuid;
             impl.createDocRepo(callingContext, auth, "NREP {} USING MONGODB {prefix=\"" + uuid + "\"}");
             assertNotNull(impl.getDocRepoConfig(callingContext, auth));
-            try {
-                impl.deleteDocsByUriPrefix(callingContext, auth + "/spurious", false);
-                Assert.fail("Exception expected");
-            } catch (Exception e) {
-                assertEquals("Document or folder " + auth + "/spurious does not exist", e.getMessage());
-            }
+            List<String> deleted = impl.deleteDocsByUriPrefix(callingContext, auth + "/spurious", false);
+            assertNotNull(deleted);
+            assertTrue(deleted.isEmpty());
         }
 
         {
@@ -504,23 +490,17 @@ public class MongoTests {
             String auth = Scheme.SERIES.toString() + "://" + uuid;
             impl.createSeriesRepo(callingContext, auth, "SREP {} USING MONGODB {prefix=\"" + uuid + "\"}");
             assertNotNull(impl.getSeriesRepoConfig(callingContext, auth));
-            try {
-                impl.deleteSeriesByUriPrefix(callingContext, auth + "/spurious", false);
-                Assert.fail("Exception expected");
-            } catch (Exception e) {
-                assertEquals("Series or folder " + auth + "/spurious does not exist", e.getMessage());
-            }
+            List<String> deleted = impl.deleteSeriesByUriPrefix(callingContext, auth + "/spurious", false);
+            assertNotNull(deleted);
+            assertTrue(deleted.isEmpty());
         }
 
         {
             ScriptApi impl = Kernel.getScript();
             String auth = Scheme.SCRIPT.toString() + "://" + uuid;
-            try {
-                impl.deleteScriptsByUriPrefix(callingContext, auth + "/spurious", false);
-                Assert.fail("Exception expected");
-            } catch (Exception e) {
-                assertEquals("Script or folder " + auth + "/spurious does not exist", e.getMessage());
-            }
+            List<String> deleted = impl.deleteScriptsByUriPrefix(callingContext, auth + "/spurious", false);
+            assertNotNull(deleted);
+            assertTrue(deleted.isEmpty());
         }
         
         {

@@ -355,8 +355,7 @@ public class SeriesApiFileTest extends AbstractFileTest {
         assertEquals(0, removed.size());
 
         resultsMap = seriesImpl.listSeriesByUriPrefix(callingContext, seriesAuthorityURI, 0);
-        // SeriesApi doesn't delete empty folders
-        assertEquals(8, resultsMap.size());
+        assertEquals(6, resultsMap.size());
     }
 
     private void ensureSeries(String repo, String name) {

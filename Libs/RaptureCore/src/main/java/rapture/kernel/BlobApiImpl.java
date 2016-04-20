@@ -498,17 +498,7 @@ public class BlobApiImpl extends KernelBase implements BlobApi, RaptureScheme {
                 log.debug("No read permission on folder " + currParentDocPath);
                 continue;
             }
-            
-            RaptureURI ruri = RaptureURI.builder(Scheme.BLOB, authority).docPath(currParentDocPath).build();
-            try {
-                String blobUri = ruri.toString();
-                if (getBlob(context, blobUri) != null) {
-                    ret.put(blobUri, new RaptureFolderInfo(currParentDocPath.substring(currParentDocPath.lastIndexOf('/')+1), false));
-                }
-            } catch (RaptureException e) {
-                // blob does not exist
-            }
-
+                        
             // Depending on the Repository it may not be possible to distinguish between an empty directory and a nonexistent directory.
             
             List<RaptureFolderInfo> children = repo.listBlobsByUriPrefix(currParentDocPath);
@@ -536,6 +526,7 @@ public class BlobApiImpl extends KernelBase implements BlobApi, RaptureScheme {
 
     @Override
     public List<String> deleteBlobsByUriPrefix(CallingContext context, String uriPrefix, Boolean recurse) {
+        RaptureURI startUri = new RaptureURI(uriPrefix, Scheme.BLOB);
         Map<String, RaptureFolderInfo> docs = listBlobsByUriPrefix(context, uriPrefix, Integer.MAX_VALUE);
         List<String> folders = new ArrayList<>();
         Set<String> notEmpty = new HashSet<>();
@@ -579,7 +570,7 @@ public class BlobApiImpl extends KernelBase implements BlobApi, RaptureScheme {
             }
         }
         
-        if (recurse) {
+        if (recurse && startUri.hasDocPath()) {
             removed.addAll(recursiveDelete(context, new RaptureURI(uriPrefix, Scheme.BLOB),  new RecursiveHelper() {  
                 public Map<String, RaptureFolderInfo> listByPrefix(CallingContext context, String uriPrefix, int depth) {
                     return listBlobsByUriPrefix(context, uriPrefix, depth);

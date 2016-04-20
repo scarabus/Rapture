@@ -32,8 +32,6 @@ import java.net.HttpURLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
@@ -44,8 +42,8 @@ import org.apache.log4j.Logger;
 import rapture.blob.BaseBlobStore;
 import rapture.blob.BlobStore;
 import rapture.common.CallingContext;
-import rapture.common.RaptureFolderInfo;
 import rapture.common.RaptureURI;
+import rapture.common.RaptureURI.Parser;
 import rapture.common.exception.RaptureExceptionFactory;
 import rapture.kernel.file.FileRepoUtils;
 
@@ -53,6 +51,9 @@ import rapture.kernel.file.FileRepoUtils;
  * A file blob store treats files as blobs, with the path of the file reflecting
  * the display name of the object. In a cloud installation the file system needs
  * to be shared and have lock semantics.
+ * 
+ * The filname has a colon : appended to allow blobs and folders to have the same name.
+ * Colon characters in the filename/dirname will get escaped automatically 
  * 
  * @author amkimian
  * 
@@ -85,7 +86,7 @@ public class FileBlobStore extends BaseBlobStore implements BlobStore {
         }
 
         try {
-            File f = FileRepoUtils.makeGenericFile(parentDir, blobUri.getDocPathWithElement());
+            File f = FileRepoUtils.makeGenericFile(parentDir, blobUri.getDocPathWithElement()+Parser.COLON_CHAR);
             if (f.isDirectory())
                 throw RaptureExceptionFactory.create(HttpURLConnection.HTTP_INTERNAL_ERROR, f.getCanonicalPath()+" exists and is a directory");
             FileUtils.forceMkdir(f.getParentFile());
@@ -101,11 +102,11 @@ public class FileBlobStore extends BaseBlobStore implements BlobStore {
 
     private Boolean createSymLink(String fromDisplayName, String toFilePath) {
         try {
-            File fromFile = FileRepoUtils.makeGenericFile(parentDir, fromDisplayName);
+            File fromFile = FileRepoUtils.makeGenericFile(parentDir, fromDisplayName+Parser.COLON_CHAR);
             Path fromFilePath = Paths.get(fromFile.getAbsolutePath());
             Files.deleteIfExists(fromFilePath);
             FileUtils.forceMkdir(fromFilePath.getParent().toFile());
-            Files.createSymbolicLink(fromFilePath, Paths.get(toFilePath));
+            Files.createSymbolicLink(fromFilePath, Paths.get(toFilePath+Parser.COLON_CHAR));
         } catch (IOException e) {
             throw RaptureExceptionFactory.create(HttpURLConnection.HTTP_INTERNAL_ERROR, "Fail to read blob content", e);
         }
@@ -114,13 +115,14 @@ public class FileBlobStore extends BaseBlobStore implements BlobStore {
 
     @Override
     public Boolean deleteBlob(CallingContext context, RaptureURI blobUri) {
-        File f = FileRepoUtils.makeGenericFile(parentDir, blobUri.getDocPath());
+        File f = FileRepoUtils.makeGenericFile(parentDir, blobUri.getDocPath()+Parser.COLON_CHAR);
         if (f.exists()) {
             boolean isFile = f.isFile();
             FileUtils.deleteQuietly(f);
             return isFile;
         } else {
-            throw RaptureExceptionFactory.create(HttpURLConnection.HTTP_BAD_REQUEST, apiMessageCatalog.getMessage("NoSuchBlob", f.getAbsolutePath())); //$NON-NLS-1$
+            logger.debug("Cannot find "+blobUri+" as "+ f.getAbsolutePath()); //$NON-NLS-1$
+            throw RaptureExceptionFactory.create(HttpURLConnection.HTTP_BAD_REQUEST, apiMessageCatalog.getMessage("NoSuchBlob", blobUri.toString())); //$NON-NLS-1$
         }
     }
 
@@ -142,7 +144,7 @@ public class FileBlobStore extends BaseBlobStore implements BlobStore {
 
     @Override
     public InputStream getBlob(CallingContext context, RaptureURI blobUri) {
-        File f = FileRepoUtils.makeGenericFile(parentDir, blobUri.getDocPath());
+        File f = FileRepoUtils.makeGenericFile(parentDir, blobUri.getDocPath()+Parser.COLON_CHAR);
         try {
             if (f.exists()) {
                 return new FileInputStream(f);
