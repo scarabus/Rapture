@@ -298,8 +298,9 @@ public class FileSeriesStore implements SeriesStore {
     @Override
     public void deletePointsFromSeries(String key) {
         File seriesFile = FileRepoUtils.makeGenericFile(parentDir, key);
-        if (!seriesFile.isFile()) return;
-        seriesFile.delete();
+        if (seriesFile.isFile() || (seriesFile.isDirectory() && (seriesFile.listFiles().length == 0))) {
+            FileUtils.deleteQuietly(seriesFile);
+        }
     }
 
     @Override
@@ -397,27 +398,22 @@ public class FileSeriesStore implements SeriesStore {
 
     @Override
     public List<RaptureFolderInfo> listSeriesByUriPrefix(String string) {
-        File file = FileRepoUtils.makeGenericFile(parentDir, string);
-        List<RaptureFolderInfo> info = Collections.emptyList();
-        if (file.isFile()) {
-            RaptureFolderInfo inf = new RaptureFolderInfo();
-            inf.setName(file.getName());
-            inf.setFolder(false);
-            info = Arrays.asList(inf);
-        } else if (file.isDirectory()) {
-            File[] children = file.listFiles();
-            info = (children == null) ? Collections.emptyList() : new ArrayList<>(children.length);
+        File dir = FileRepoUtils.makeGenericFile(parentDir, string);
+        List<RaptureFolderInfo> ret = new ArrayList<RaptureFolderInfo>();
+        if (!dir.exists()) return null;
+
+        if (dir.isDirectory()) {
+            File[] children = dir.listFiles();
             if (children != null) {
-                info = new ArrayList<>(children.length);
                 for (File kid : children) {
                     RaptureFolderInfo inf = new RaptureFolderInfo();
                     inf.setName(kid.getName());
                     inf.setFolder(kid.isDirectory());
-                    info.add(inf);
+                    ret.add(inf);
                 }
             }
         }
-        return info;
+        return ret;
     }
 
     @Override

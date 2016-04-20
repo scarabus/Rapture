@@ -92,7 +92,8 @@ public class BlobRepo {
         return metaDataRepo.getDocument(metaUri);
     }
 
-    public List<RaptureFolderInfo> listMetaByUriPrefix(String blobUriPrefix) {
+    public List<RaptureFolderInfo> listBlobsByUriPrefix(String blobUriPrefix) {
+        // return store.getChildren(blobUriPrefix);
         return metaDataRepo.getChildren(blobUriPrefix);
     }
 

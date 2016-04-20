@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 package rapture.kernel;
+
 import static rapture.common.Scheme.BLOB;
 
 import java.io.ByteArrayInputStream;
@@ -31,7 +32,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,6 +53,7 @@ import rapture.common.ContentEnvelope;
 import rapture.common.EntitlementSet;
 import rapture.common.RaptureFolderInfo;
 import rapture.common.RaptureURI;
+import rapture.common.Scheme;
 import rapture.common.api.BlobApi;
 import rapture.common.exception.RaptureException;
 import rapture.common.exception.RaptureExceptionFactory;
@@ -289,9 +290,8 @@ public class BlobApiImpl extends KernelBase implements BlobApi, RaptureScheme {
 
         // Has the repo been deleted?
         if (blobRepo != null) {
-            if (blobRepo.deleteBlob(context, blobURI)) {
-                deleteMeta(context, blobURI);
-            }
+            blobRepo.deleteBlob(context, blobURI);
+            deleteMeta(context, blobURI);
         }
     }
 
@@ -418,8 +418,14 @@ public class BlobApiImpl extends KernelBase implements BlobApi, RaptureScheme {
         // But listBlobsByUriPrefix could be slow for a large number of blobs too.
 
         /***
-         * try { RaptureURI uri = new RaptureURI(seriesUri, BLOB); String respectMah = uri.getAuthority(); for (String rfi : listBlobsByUriPrefix
-         * (context, respectMah).keySet()) { if (rfi.equals(seriesUri)) return true; } return false; } catch (Exception e) { return false; }
+         * try { 
+         *   RaptureURI uri = new RaptureURI(seriesUri, BLOB); 
+         *   String respectMah = uri.getAuthority(); 
+         *   for (String rfi : listBlobsByUriPrefix (context, respectMah).keySet()) { 
+         *     if (rfi.equals(seriesUri)) return true; 
+         *   } 
+         *   return false; 
+         * } catch (Exception e) { return false; }
          ***/
         try {
             return (getBlob(context, blobUri) != null);
@@ -446,7 +452,7 @@ public class BlobApiImpl extends KernelBase implements BlobApi, RaptureScheme {
                         log.warn("Invalid authority (null or empty string) found for " + JacksonUtil.jsonFromObject(config));
                         continue;
                     }
-                    String uri = BLOB + "://" + authority;
+                    String uri = new RaptureURI(authority, Scheme.BLOB).toString();
                     ret.put(uri, new RaptureFolderInfo(authority, true));
                     if (depth != 0) {
                         ret.putAll(listBlobsByUriPrefix(context, uri, depth));
@@ -492,19 +498,27 @@ public class BlobApiImpl extends KernelBase implements BlobApi, RaptureScheme {
                 log.debug("No read permission on folder " + currParentDocPath);
                 continue;
             }
+            
+            RaptureURI ruri = RaptureURI.builder(Scheme.BLOB, authority).docPath(currParentDocPath).build();
+            try {
+                String blobUri = ruri.toString();
+                if (getBlob(context, blobUri) != null) {
+                    ret.put(blobUri, new RaptureFolderInfo(currParentDocPath.substring(currParentDocPath.lastIndexOf('/')+1), false));
+                }
+            } catch (RaptureException e) {
+                // blob does not exist
+            }
 
-            List<RaptureFolderInfo> children = repo.listMetaByUriPrefix(currParentDocPath);
-            if ((children == null) || (children.isEmpty()) && (currDepth == 0) && (internalUri.hasDocPath())) {
-                throw RaptureExceptionFactory.create(HttpURLConnection.HTTP_BAD_REQUEST, apiMessageCatalog.getMessage("NoSuchBlob", internalUri.toString())); //$NON-NLS-1$
-            } else {
+            // Depending on the Repository it may not be possible to distinguish between an empty directory and a nonexistent directory.
+            
+            List<RaptureFolderInfo> children = repo.listBlobsByUriPrefix(currParentDocPath);
+            if (children != null) {
                 for (RaptureFolderInfo child : children) {
-                    String childDocPath = currParentDocPath + (top ? "" : "/") + child.getName();
-                    if (child.getName().isEmpty()) continue;
-                    String childUri = BLOB + "://" + authority + "/" + childDocPath + (child.isFolder() ? "/" : "");
-                    ret.put(childUri, child);
-                    if (child.isFolder()) {
-                        parentsStack.push(childDocPath);
-                    }
+                    String name = child.getName();
+                    String childDocPath = currParentDocPath + (top ? "" : "/") + name;
+                    if (name.isEmpty()) continue;
+                    ret.put(RaptureURI.builder(Scheme.BLOB, authority).docPath(childDocPath + (child.isFolder() ? "/" : "")).build().toString(), child);
+                    if (child.isFolder()) parentsStack.push(childDocPath);
                 }
             }
             if (top) startDepth--; // special case
@@ -519,7 +533,7 @@ public class BlobApiImpl extends KernelBase implements BlobApi, RaptureScheme {
     private void removeRepoFromCache(String authority) {
         Kernel.getRepoCacheManager().removeRepo(BLOB.toString(), authority);
     }
-    
+
     @Override
     public List<String> deleteBlobsByUriPrefix(CallingContext context, String uriPrefix, Boolean recurse) {
         Map<String, RaptureFolderInfo> docs = listBlobsByUriPrefix(context, uriPrefix, Integer.MAX_VALUE);
@@ -558,32 +572,24 @@ public class BlobApiImpl extends KernelBase implements BlobApi, RaptureScheme {
         }
         for (String uri : folders) {
             if (notEmpty.contains(uri)) continue;
-            deleteBlob(context, uri);
+            try {
+                deleteBlob(context, uri);
+            } catch (RaptureException e) {
+                // Does not exist - that's OK
+            }
         }
         
         if (recurse) {
-            RaptureURI ruri = new RaptureURI(uriPrefix);
-            String auth = ruri.getAuthority();
-//            BlobRepo repository = getRepoFromCache(auth);
-            String duri = uriPrefix;
-            while (duri.lastIndexOf('/') > 0) {
-                duri = duri.substring(0, duri.lastIndexOf('/'));
-                try {
-                    docs = listBlobsByUriPrefix(context, duri, 2);
-                } catch (Exception e) {
-                    docs = Collections.emptyMap();
+            removed.addAll(recursiveDelete(context, new RaptureURI(uriPrefix, Scheme.BLOB),  new RecursiveHelper() {  
+                public Map<String, RaptureFolderInfo> listByPrefix(CallingContext context, String uriPrefix, int depth) {
+                    return listBlobsByUriPrefix(context, uriPrefix, depth);
                 }
-                if (docs.size() == 0) {
-//                    repository.removeChildren(new RaptureURI(duri, Scheme.BLOB).getDocPath(), true);
-                    deleteBlob(context, duri);
-                } else {
-                    break;
+    
+                public void removeChild(CallingContext context, RaptureURI uri) {
+                    deleteBlob(context, uri.toString());
                 }
-            }
+            }));
         }        
-
         return removed;
     }
-
-    
 }

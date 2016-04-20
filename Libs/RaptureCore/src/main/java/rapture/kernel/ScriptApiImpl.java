@@ -331,22 +331,27 @@ public class ScriptApiImpl extends KernelBase implements ScriptApi {
                 log.debug("No read permission on folder " + currParentDocPath);
                 continue;
             }
+            
+            try {
+                if (getScript(context, currParentDocPath) != null) {
+                    ret.put(new RaptureURI(currParentDocPath, Scheme.SCRIPT).toString(), new RaptureFolderInfo(currParentDocPath.substring(currParentDocPath.lastIndexOf('/')+1), false));
+                }
+            } catch (RaptureException e) {
+                // blob does not exist
+            }
 
             boolean top = currParentDocPath.isEmpty();
             List<RaptureFolderInfo> children = RaptureScriptStorage.getChildren(currParentDocPath);
-            if ((children == null) || (children.isEmpty()) && (currDepth == 0) && (internalUri.hasDocPath())) {
-                throw RaptureExceptionFactory.create(HttpURLConnection.HTTP_BAD_REQUEST, apiMessageCatalog.getMessage("NoSuchScript", internalUri.toString())); //$NON-NLS-1$
-            } else {
+            if (children != null) {
                 for (RaptureFolderInfo child : children) {
-                    String childDocPath = currParentDocPath + (top ? "" : "/") + child.getName();
-                    if (child.getName().isEmpty()) continue;
-                    // Special case: for Scripts childDocPath includes the authority
+                    String name = child.getName();
+                    String childDocPath = currParentDocPath + (top ? "" : "/") + name;
+                    if (name.isEmpty()) continue;
 
+                    // Special case: for Scripts childDocPath includes the authority
                     RaptureURI childUri = new RaptureURI(childDocPath + (child.isFolder() ? "/" : ""), Scheme.SCRIPT);
                     ret.put(childUri.toString(), child);
-                    if (child.isFolder()) {
-                        parentsStack.push(childDocPath);
-                    }
+                    if (child.isFolder()) parentsStack.push(childDocPath);
                 }
             }
 
@@ -397,28 +402,19 @@ public class ScriptApiImpl extends KernelBase implements ScriptApi {
         }
         
         if (recurse) {
-            RaptureURI ruri = new RaptureURI(uriPrefix);
-            String auth = ruri.getAuthority();
-//            SeriesRepo repository = getRepoFromCache(auth);
-            String duri = uriPrefix;
-            while (duri.lastIndexOf('/') > 0) {
-                duri = duri.substring(0, duri.lastIndexOf('/'));
-                try {
-                    docs = listScriptsByUriPrefix(context, duri, 2);
-                } catch (Exception e) {
-                    docs = Collections.emptyMap();
+            removed.addAll(recursiveDelete(context, new RaptureURI(uriPrefix, Scheme.SCRIPT), new RecursiveHelper() {  
+                public Map<String, RaptureFolderInfo> listByPrefix(CallingContext context, String uriPrefix, int depth) {
+                    return listScriptsByUriPrefix(context, uriPrefix, depth);
                 }
-                if (docs.size() == 0) {
-//                    repository.removeChildren(new RaptureURI(duri, Scheme.SERIES).getDocPath(), true);
-                    deleteScript(context, duri);
-                } else {
-                    break;
+                
+                public void removeChild(CallingContext context, RaptureURI uri) {
+                    RaptureScriptStorage.removeFolder(uri.getShortPath());
                 }
-            }
+            }));
         }        
-        
         return removed;
     }
+    
 
     /**
      * These all manipulate a ReflexREPLSession object

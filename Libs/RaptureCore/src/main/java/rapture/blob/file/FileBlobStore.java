@@ -32,6 +32,8 @@ import java.net.HttpURLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
@@ -42,6 +44,7 @@ import org.apache.log4j.Logger;
 import rapture.blob.BaseBlobStore;
 import rapture.blob.BlobStore;
 import rapture.common.CallingContext;
+import rapture.common.RaptureFolderInfo;
 import rapture.common.RaptureURI;
 import rapture.common.exception.RaptureExceptionFactory;
 import rapture.kernel.file.FileRepoUtils;
@@ -109,13 +112,13 @@ public class FileBlobStore extends BaseBlobStore implements BlobStore {
         return true;
     }
 
-    // Should be void
     @Override
     public Boolean deleteBlob(CallingContext context, RaptureURI blobUri) {
         File f = FileRepoUtils.makeGenericFile(parentDir, blobUri.getDocPath());
         if (f.exists()) {
+            boolean isFile = f.isFile();
             FileUtils.deleteQuietly(f);
-            return true;
+            return isFile;
         } else {
             throw RaptureExceptionFactory.create(HttpURLConnection.HTTP_BAD_REQUEST, apiMessageCatalog.getMessage("NoSuchBlob", f.getAbsolutePath())); //$NON-NLS-1$
         }

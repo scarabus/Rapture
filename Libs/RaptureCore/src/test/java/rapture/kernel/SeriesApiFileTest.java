@@ -35,12 +35,16 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.google.common.net.MediaType;
+
+import rapture.common.BlobContainer;
 import rapture.common.CallingContext;
 import rapture.common.RaptureConstants;
 import rapture.common.RaptureFolderInfo;
@@ -48,6 +52,7 @@ import rapture.common.RaptureURI;
 import rapture.common.Scheme;
 import rapture.common.SeriesPoint;
 import rapture.common.SeriesRepoConfig;
+import rapture.common.api.BlobApi;
 import rapture.common.api.SeriesApi;
 import rapture.common.exception.RaptureException;
 import rapture.series.SeriesFactory;
@@ -540,6 +545,71 @@ public class SeriesApiFileTest extends AbstractFileTest {
         }
         // this should be OK
         SeriesFactory.createStore(new RaptureURI("series://bogus"), "SREP { } using FILE { prefix=\"y\" } ");
+    }
+    
+    @Test
+    public void testRap4002() {
+        CallingContext callingContext = ContextFactory.getKernelUser();
+        Kernel.initBootstrap();
+        String uuid = UUID.randomUUID().toString();
+        String auth = new RaptureURI(uuid, Scheme.SERIES).toString();
+
+        SeriesApi api = Kernel.getSeries();
+
+        api.createSeriesRepo(callingContext, auth, "SREP {} USING FILE { prefix=\"/tmp/" + uuid + "\"}");
+
+        String clyde = "PacMan/Wocka/Wocka/Wocka/Inky/Pinky/Blinky/Clyde";
+        String sue = "PacMan/Wocka/Wocka/Wocka/Sue";
+        String clydeUri = auth + clyde;
+        String sueUri = auth + sue;
+        
+        String content = "content";
+        ensureSeries(auth, clyde);
+        ensureSeries(auth, sue);
+                
+        Map<String, RaptureFolderInfo> byPrefix;
+        byPrefix = api.listSeriesByUriPrefix(callingContext, auth+"/PacMan", 10);
+        
+        assertEquals(8, byPrefix.size());
+        
+        byPrefix = api.listSeriesByUriPrefix(callingContext, auth+"/PacMan/Wocka/Wocka/Wocka/Inky/Pinky/Blinky", 10);
+        assertEquals(1, byPrefix.size());
+        assertEquals(clydeUri, byPrefix.keySet().toArray(new String[1])[0]);
+        
+        byPrefix = api.listSeriesByUriPrefix(callingContext, clydeUri, 10);
+        assertEquals(1, byPrefix.size());
+        assertEquals(clydeUri, byPrefix.keySet().toArray(new String[1])[0]);
+
+        
+        List<String> deleted = api.deleteSeriesByUriPrefix(callingContext, clydeUri, false);
+        assertEquals(1, deleted.size());
+
+        try {
+            SeriesPoint lastPoint = api.getLastPoint(callingContext, clydeUri);
+            // SHOULD FAIL OR DO NOTHING
+        } catch (Exception e) {
+            assertTrue(e.getMessage().equals("Series or folder "+clydeUri+" does not exist"));
+        }
+        
+        Map<String, RaptureFolderInfo> docs = api.listSeriesByUriPrefix(callingContext, auth + "/PacMan", -1);
+        assertEquals(7, docs.size());
+        for (RaptureFolderInfo rfi : docs.values()) {
+            assertTrue(rfi.isFolder() || rfi.getName().equals("Sue"));
+        }
+        
+        ensureSeries(auth, clyde);
+        deleted = api.deleteSeriesByUriPrefix(callingContext, clydeUri, true);
+        assertEquals(4, deleted.size());
+        
+        try {
+            SeriesPoint lastPoint = api.getLastPoint(callingContext, clydeUri);
+            // SHOULD FAIL OR DO NOTHING
+        } catch (Exception e) {
+            assertTrue(e.getMessage().equals("Series or folder "+clydeUri+" does not exist"));
+        }
+                
+        docs = api.listSeriesByUriPrefix(callingContext, auth + "/PacMan", -1);
+        assertEquals(4, docs.size());
     }
 
 }

@@ -187,7 +187,12 @@ public class FileDataStore extends AbstractKeyStore implements KeyStore {
     @Override
     public boolean delete(String key) {
         File f = FileRepoUtils.makeGenericFile(parentDir, convertKeyToPathWithExtension(key));
-        return FileUtils.deleteQuietly(f);
+        if (f.exists()) return FileUtils.deleteQuietly(f);
+        f = FileRepoUtils.makeGenericFile(parentDir, key);
+        if (f.isDirectory() && f.listFiles().length == 0) {
+            FileUtils.deleteQuietly(f);
+        }
+        return false;
     }
 
     @Override
@@ -318,17 +323,12 @@ public class FileDataStore extends AbstractKeyStore implements KeyStore {
      */
     @Override
     public List<RaptureFolderInfo> getSubKeys(String prefix) {
-        File maybeFile = FileRepoUtils.makeGenericFile(parentDir, convertKeyToPath(prefix) + EXTENSION);
         File dir = FileRepoUtils.makeGenericFile(parentDir, convertKeyToPath(prefix));
         List<RaptureFolderInfo> ret = new ArrayList<RaptureFolderInfo>();
 
-        if (!maybeFile.exists() && !dir.exists()) return null;
+        if (!dir.exists()) return null;
         
-        if (maybeFile.isFile()) {
-            ret.add(new RaptureFolderInfo(removeExtension(FileRepoUtils.decode(dir.getName())), false));
-        }
         if (dir.isDirectory()) {
-// //           ret.add(new RaptureFolderInfo(removeExtension(FileRepoUtils.decode(dir.getName())), true));
             File[] files = dir.listFiles();
             if (files != null) {
                 for (File f : files) {

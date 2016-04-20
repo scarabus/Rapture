@@ -24,10 +24,15 @@
 package rapture.kernel;
 
 import java.net.HttpURLConnection;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import rapture.common.CallingContext;
 import rapture.common.Messages;
+import rapture.common.RaptureFolderInfo;
 import rapture.common.RaptureURI;
 import rapture.common.exception.RaptureExceptionFactory;
 import rapture.repo.Repository;
@@ -105,4 +110,20 @@ public abstract class KernelBase {
     void end() {
     };
 
+    List<String> recursiveDelete(CallingContext context, RaptureURI uri, RecursiveHelper helper) {
+        Map<String, RaptureFolderInfo> docs = null;
+        List<String> removed = new ArrayList<>();
+        String duri = uri.toString();
+        while (duri.lastIndexOf('/') > 0) {
+            duri = duri.substring(0, duri.lastIndexOf('/'));
+            docs = helper.listByPrefix(context, duri, 2);
+            if (docs.size() == 0) {
+                helper.removeChild(context, new RaptureURI(duri+"/"));
+                removed.add(duri);
+            } else {
+                break;
+            }
+        }
+        return removed;
+    }        
 }

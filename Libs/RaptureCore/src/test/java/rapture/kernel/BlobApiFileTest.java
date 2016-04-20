@@ -273,11 +273,11 @@ public class BlobApiFileTest extends AbstractFileTest {
     @Test
     public void testRap3945() {
         testCreateAndGetRepo();
-        String blobURI1 = blobAuthorityURI + "/PacMan/Inky";
-        String blobURI2 = blobAuthorityURI + "/PacMan/Pinky";
-        String blobURI3 = blobAuthorityURI + "/PacMan/Blnky";
-        String blobURI4 = blobAuthorityURI + "/PacMan/Clyde";
-        String blobURI5 = blobAuthorityURI + "/PacMan/Sue";
+        String blobURI1 = blobAuthorityURI + "/Inky";
+        String blobURI2 = blobAuthorityURI + "/Pinky";
+        String blobURI3 = blobAuthorityURI + "/Blinky";
+        String blobURI4 = blobAuthorityURI + "/Clyde";
+        String blobURI5 = blobAuthorityURI + "/Sue";
 
         blobImpl.putBlob(callingContext, blobURI1, SAMPLE_BLOB, MediaType.CSS_UTF_8.toString());
         blobImpl.putBlob(callingContext, blobURI2, SAMPLE_BLOB, MediaType.CSS_UTF_8.toString());
@@ -316,4 +316,75 @@ public class BlobApiFileTest extends AbstractFileTest {
         assertNotNull(blob.getContent());
         assertArrayEquals(SAMPLE_BLOB, blob.getContent());        
     }
+    
+    @Test
+    public void testRap4002() {
+        testCreateAndGetRepo();
+        String clydeUri = blobAuthorityURI + "/PacMan/Wocka/Wocka/Wocka/Inky/Pinky/Blinky/Clyde";
+        String sueUri = blobAuthorityURI + "/PacMan/Wocka/Wocka/Wocka/Sue";
+        
+        String content = "content";
+        
+        blobImpl.putBlob(callingContext, clydeUri, content.getBytes(), MediaType.ANY_TEXT_TYPE.toString());
+        blobImpl.putBlob(callingContext, sueUri, content.getBytes(), MediaType.ANY_TEXT_TYPE.toString());
+        BlobContainer blob = blobImpl.getBlob(callingContext, clydeUri);
+        String doc = new String(blob.getContent());
+        assertNotNull(doc);
+        assertEquals(content, doc);
+        
+        Map<String, RaptureFolderInfo> byPrefix;
+        byPrefix = blobImpl.listBlobsByUriPrefix(callingContext, blobAuthorityURI+"/PacMan", 10);
+
+        StringBuilder sb = new StringBuilder();
+        if (byPrefix.size() != 8) {
+            for (String s : byPrefix.keySet()) {
+                sb.append(s).append("\n");
+            }
+        }
+        assertEquals(sb.toString(), 8, byPrefix.size());
+        
+        byPrefix = blobImpl.listBlobsByUriPrefix(callingContext, blobAuthorityURI+"/PacMan/Wocka/Wocka/Wocka/Inky/Pinky/Blinky", 10);
+        assertEquals(1, byPrefix.size());
+        assertEquals(clydeUri, byPrefix.keySet().toArray(new String[1])[0]);
+        
+        byPrefix = blobImpl.listBlobsByUriPrefix(callingContext, clydeUri, 10);
+        assertEquals(1, byPrefix.size());
+        assertEquals(clydeUri, byPrefix.keySet().toArray(new String[1])[0]);
+
+        
+        List<String> deleted = blobImpl.deleteBlobsByUriPrefix(callingContext, clydeUri, false);
+        assertEquals(1, deleted.size());
+
+        try {
+            blob = blobImpl.getBlob(callingContext, clydeUri);
+            // SHOULD FAIL OR DO NOTHING
+        } catch (Exception e) {
+            assertTrue(e.getMessage().equals("Blob or folder "+clydeUri+" does not exist"));
+        }
+        
+        Map<String, RaptureFolderInfo> docs = blobImpl.listBlobsByUriPrefix(callingContext, blobAuthorityURI + "/PacMan", -1);
+        assertEquals(7, docs.size());
+        for (RaptureFolderInfo rfi : docs.values()) {
+            assertTrue(rfi.isFolder() || rfi.getName().equals("Sue"));
+        }
+        
+        
+        blobImpl.putBlob(callingContext, clydeUri, content.getBytes(), MediaType.ANY_TEXT_TYPE.toString());
+        blob = blobImpl.getBlob(callingContext, clydeUri);
+        assertNotNull(doc);
+        
+        deleted = blobImpl.deleteBlobsByUriPrefix(callingContext, clydeUri, true);
+        assertEquals(4, deleted.size());
+        
+        try {
+            blob = blobImpl.getBlob(callingContext, clydeUri);
+            // SHOULD FAIL OR DO NOTHING
+        } catch (Exception e) {
+            assertTrue(e.getMessage().equals("Blob or folder "+clydeUri+" does not exist"));
+        }
+                
+        docs = blobImpl.listBlobsByUriPrefix(callingContext, blobAuthorityURI + "/PacMan", -1);
+        assertEquals(4, docs.size());
+    }
+
 }

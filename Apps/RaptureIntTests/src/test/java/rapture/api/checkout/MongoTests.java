@@ -23,8 +23,9 @@
  */
 package rapture.api.checkout;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
@@ -64,7 +65,6 @@ import rapture.common.api.BlobApi;
 import rapture.common.api.DocApi;
 import rapture.common.api.EventApi;
 import rapture.common.api.JarApi;
-import rapture.common.api.NotificationApi;
 import rapture.common.api.ScriptApi;
 import rapture.common.api.SeriesApi;
 import rapture.common.client.HttpBlobApi;
@@ -366,7 +366,7 @@ public class MongoTests {
 
         assertNull(blobImpl.getBlob(callingContext, blobURI5));
 
-        blobImpl.deleteBlobsByUriPrefix(callingContext, blobURI4);
+        blobImpl.deleteBlobsByUriPrefix(callingContext, blobURI4, false);
         blob = blobImpl.getBlob(callingContext, blobURI1);
         assertNotNull(blob);
         assertNotNull(blob.getContent());
@@ -374,7 +374,7 @@ public class MongoTests {
         assertNull(blobImpl.getBlob(callingContext, blobURI4));
 
         try {
-            blobImpl.deleteBlobsByUriPrefix(callingContext, blobURI5);
+            blobImpl.deleteBlobsByUriPrefix(callingContext, blobURI5, false);
             // SHOULD FAIL OR DO NOTHING
         } catch (Exception e) {
             assertEquals("Blob or folder " + blobURI5 + " does not exist", e.getMessage());
@@ -397,7 +397,7 @@ public class MongoTests {
             impl.createBlobRepo(callingContext, auth, "BLOB {} USING MONGODB {prefix=\"" + uuid + "\"}", "NREP {} USING MONGODB {prefix=\"Meta" + uuid + "\"}");
             assertNotNull(impl.getBlobRepoConfig(callingContext, auth));
             try {
-                impl.deleteBlobsByUriPrefix(callingContext, auth + "/spurious");
+                impl.deleteBlobsByUriPrefix(callingContext, auth + "/spurious", false);
                 Assert.fail("Exception expected");
             } catch (Exception e) {
                 assertEquals("Blob or folder " + auth + "/spurious does not exist", e.getMessage());
@@ -410,7 +410,7 @@ public class MongoTests {
             impl.createDocRepo(callingContext, auth, "NREP {} USING MONGODB {prefix=\"" + uuid + "\"}");
             assertNotNull(impl.getDocRepoConfig(callingContext, auth));
             try {
-                impl.deleteDocsByUriPrefix(callingContext, auth + "/spurious");
+                impl.deleteDocsByUriPrefix(callingContext, auth + "/spurious", false);
                 Assert.fail("Exception expected");
             } catch (Exception e) {
                 assertEquals("Document or folder " + auth + "/spurious does not exist", e.getMessage());
@@ -423,7 +423,7 @@ public class MongoTests {
             impl.createSeriesRepo(callingContext, auth, "SREP {} USING MONGODB {prefix=\"" + uuid + "\"}");
             assertNotNull(impl.getSeriesRepoConfig(callingContext, auth));
             try {
-                impl.deleteSeriesByUriPrefix(callingContext, auth + "/spurious");
+                impl.deleteSeriesByUriPrefix(callingContext, auth + "/spurious", false);
                 Assert.fail("Exception expected");
             } catch (Exception e) {
                 assertEquals("Series or folder " + auth + "/spurious does not exist", e.getMessage());
@@ -434,7 +434,7 @@ public class MongoTests {
             ScriptApi impl = Kernel.getScript();
             String auth = Scheme.SCRIPT.toString() + "://" + uuid;
             try {
-                impl.deleteScriptsByUriPrefix(callingContext, auth + "/spurious");
+                impl.deleteScriptsByUriPrefix(callingContext, auth + "/spurious", false);
                 Assert.fail("Exception expected");
             } catch (Exception e) {
                 assertEquals("Script or folder " + auth + "/spurious does not exist", e.getMessage());
@@ -483,23 +483,16 @@ public class MongoTests {
             impl.createBlobRepo(callingContext, auth, "BLOB {} USING MONGODB {prefix=\"" + uuid + "\"}", "NREP {} USING MONGODB {prefix=\"Meta" + uuid + "\"}");
             assertNotNull(impl.getBlobRepoConfig(callingContext, auth));
             impl.putBlob(callingContext, auth+"/foo", auth.getBytes(), MediaType.ANY_TEXT_TYPE.toString());
-            impl.deleteBlobsByUriPrefix(callingContext, auth);
+            impl.deleteBlobsByUriPrefix(callingContext, auth, false);
         }
-        
-        
-        
-        /// COPYPASTA NOT EDITED YET
-        
-        
-        
-        
+
         {
             DocApi impl = Kernel.getDoc();
             String auth = Scheme.DOCUMENT.toString() + "://" + uuid;
             impl.createDocRepo(callingContext, auth, "NREP {} USING MONGODB {prefix=\"" + uuid + "\"}");
             assertNotNull(impl.getDocRepoConfig(callingContext, auth));
             try {
-                impl.deleteDocsByUriPrefix(callingContext, auth + "/spurious");
+                impl.deleteDocsByUriPrefix(callingContext, auth + "/spurious", false);
                 Assert.fail("Exception expected");
             } catch (Exception e) {
                 assertEquals("Document or folder " + auth + "/spurious does not exist", e.getMessage());
@@ -512,7 +505,7 @@ public class MongoTests {
             impl.createSeriesRepo(callingContext, auth, "SREP {} USING MONGODB {prefix=\"" + uuid + "\"}");
             assertNotNull(impl.getSeriesRepoConfig(callingContext, auth));
             try {
-                impl.deleteSeriesByUriPrefix(callingContext, auth + "/spurious");
+                impl.deleteSeriesByUriPrefix(callingContext, auth + "/spurious", false);
                 Assert.fail("Exception expected");
             } catch (Exception e) {
                 assertEquals("Series or folder " + auth + "/spurious does not exist", e.getMessage());
@@ -523,7 +516,7 @@ public class MongoTests {
             ScriptApi impl = Kernel.getScript();
             String auth = Scheme.SCRIPT.toString() + "://" + uuid;
             try {
-                impl.deleteScriptsByUriPrefix(callingContext, auth + "/spurious");
+                impl.deleteScriptsByUriPrefix(callingContext, auth + "/spurious", false);
                 Assert.fail("Exception expected");
             } catch (Exception e) {
                 assertEquals("Script or folder " + auth + "/spurious does not exist", e.getMessage());
@@ -558,4 +551,75 @@ public class MongoTests {
             }
         }
     }
+    
+    @Test
+    public void testRap4002() {
+        CallingContext callingContext = ContextFactory.getKernelUser();
+        Kernel.initBootstrap();
+        String uuid = UUID.randomUUID().toString();
+        BlobApi blobImpl = Kernel.getBlob();
+        String blobAuthorityURI = Scheme.BLOB.toString() + "://" + uuid;
+        blobImpl.createBlobRepo(callingContext, blobAuthorityURI, "BLOB {} USING MONGODB {prefix=\"" + uuid + "\"}", "NREP {} USING MONGODB {prefix=\"Meta" + uuid + "\"}");
+        assertNotNull(blobImpl.getBlobRepoConfig(callingContext, blobAuthorityURI));
+
+        String clydeUri = blobAuthorityURI + "/PacMan/Wocka/Wocka/Wocka/Inky/Pinky/Blinky/Clyde";
+        String sueUri = blobAuthorityURI + "/PacMan/Wocka/Wocka/Wocka/Sue";
+        
+        String content = "content";
+        
+        blobImpl.putBlob(callingContext, clydeUri, content.getBytes(), MediaType.ANY_TEXT_TYPE.toString());
+        blobImpl.putBlob(callingContext, sueUri, content.getBytes(), MediaType.ANY_TEXT_TYPE.toString());
+        BlobContainer blob = blobImpl.getBlob(callingContext, clydeUri);
+        String doc = new String(blob.getContent());
+        assertNotNull(doc);
+        assertEquals(content, doc);
+        
+        Map<String, RaptureFolderInfo> byPrefix;
+
+        byPrefix = blobImpl.listBlobsByUriPrefix(callingContext, blobAuthorityURI+"/PacMan", 10);
+        assertEquals(8, byPrefix.size());
+        
+        byPrefix = blobImpl.listBlobsByUriPrefix(callingContext, blobAuthorityURI+"/PacMan/Wocka/Wocka/Wocka/Inky/Pinky/Blinky", 10);
+        assertEquals(1, byPrefix.size());
+        assertEquals(clydeUri, byPrefix.keySet().toArray(new String[1])[0]);
+        
+        byPrefix = blobImpl.listBlobsByUriPrefix(callingContext, clydeUri, 10);
+        assertEquals(1, byPrefix.size());
+        assertEquals(clydeUri, byPrefix.keySet().toArray(new String[1])[0]);
+
+        
+        blobImpl.deleteBlobsByUriPrefix(callingContext, clydeUri, false);
+        
+        try {
+            blob = blobImpl.getBlob(callingContext, clydeUri);
+            // SHOULD FAIL OR DO NOTHING
+        } catch (Exception e) {
+            assertTrue(e.getMessage().equals("Blob or folder "+clydeUri+" does not exist"));
+        }
+        
+        Map<String, RaptureFolderInfo> docs = blobImpl.listBlobsByUriPrefix(callingContext, blobAuthorityURI + "/PacMan", -1);
+        assertEquals(7, docs.size());
+        for (RaptureFolderInfo rfi : docs.values()) {
+            assertTrue(rfi.isFolder() || rfi.getName().equals("Sue"));
+        }
+        
+        
+        blobImpl.putBlob(callingContext, clydeUri, content.getBytes(), MediaType.ANY_TEXT_TYPE.toString());
+        blob = blobImpl.getBlob(callingContext, clydeUri);
+        assertNotNull(doc);
+        
+        List<String> deleted = blobImpl.deleteBlobsByUriPrefix(callingContext, clydeUri, true);
+        assertEquals(4, deleted.size());
+        
+        try {
+            blob = blobImpl.getBlob(callingContext, clydeUri);
+            // SHOULD FAIL OR DO NOTHING
+        } catch (Exception e) {
+            assertTrue(e.getMessage().equals("Blob or folder "+clydeUri+" does not exist"));
+        }
+                
+        docs = blobImpl.listBlobsByUriPrefix(callingContext, blobAuthorityURI + "/PacMan", -1);
+        assertEquals(4, docs.size());
+    }
+
 }

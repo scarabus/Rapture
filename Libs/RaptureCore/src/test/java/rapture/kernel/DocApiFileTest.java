@@ -437,13 +437,26 @@ public class DocApiFileTest extends AbstractFileTest {
         String sueUri = docAuthorityURI + "/PacMan/Wocka/Wocka/Wocka/Sue";
         
         String content = "{\"foo\" : \"bar\" }";
-
+        
         docImpl.putDoc(callingContext, clydeUri, content);
         docImpl.putDoc(callingContext, sueUri, content);
         String doc = docImpl.getDoc(callingContext, clydeUri);
         assertNotNull(doc);
         assertEquals(content, doc);
         
+        Map<String, RaptureFolderInfo> byPrefix;
+
+        byPrefix = docImpl.listDocsByUriPrefix(callingContext, docAuthorityURI+"/PacMan", 10);
+        assertEquals(8, byPrefix.size());
+        
+        byPrefix = docImpl.listDocsByUriPrefix(callingContext, docAuthorityURI+"/PacMan/Wocka/Wocka/Wocka/Inky/Pinky/Blinky", 10);
+        assertEquals(1, byPrefix.size());
+        assertEquals(clydeUri, byPrefix.keySet().toArray(new String[1])[0]);
+        
+        byPrefix = docImpl.listDocsByUriPrefix(callingContext, clydeUri, 10);
+        assertEquals(1, byPrefix.size());
+        assertEquals(clydeUri, byPrefix.keySet().toArray(new String[1])[0]);
+
         
         docImpl.deleteDocsByUriPrefix(callingContext, clydeUri, false);
         
@@ -466,7 +479,8 @@ public class DocApiFileTest extends AbstractFileTest {
         assertNotNull(doc);
         assertEquals(content, doc);
         
-        docImpl.deleteDocsByUriPrefix(callingContext, clydeUri, true);
+        List<String> deleted = docImpl.deleteDocsByUriPrefix(callingContext, clydeUri, true);
+        assertEquals(4, deleted.size());
         
         try {
             doc = docImpl.getDoc(callingContext, clydeUri);

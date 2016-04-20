@@ -24,9 +24,9 @@
 package rapture.kernel;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +52,7 @@ import rapture.common.RaptureSnippet;
 import rapture.common.RaptureURI;
 import rapture.common.Scheme;
 import rapture.common.ScriptResult;
+import rapture.common.api.ScriptApi;
 import rapture.common.api.ScriptingApi;
 import rapture.config.ConfigLoader;
 import reflex.IReflexHandler;
@@ -132,17 +133,21 @@ public class ScriptApiFileTest extends AbstractFileTest {
 
     @Test
     public void testPutScript() {
+        RaptureScript script = putScript("Candy", "// do nothing");
+        RaptureScript scriptRead = scriptImpl.getScript(ContextFactory.getKernelUser(), script.getAddressURI().toString());
+        assertEquals(script.getScript(), scriptRead.getScript());
+    }
+
+    RaptureScript putScript(String name, String text) {
         RaptureScript script = new RaptureScript();
         script.setAuthority(auth);
         script.setLanguage(RaptureScriptLanguage.REFLEX);
-        script.setName("Candy");
+        script.setName(name);
         script.setPurpose(RaptureScriptPurpose.PROGRAM);
         script.setParameters(Collections.EMPTY_LIST);
-        String scriptWrite = "// do nothing";
-        script.setScript(scriptWrite);
+        script.setScript(text);
         scriptImpl.putScript(ContextFactory.getKernelUser(), script.getAddressURI().toString(), script);
-        RaptureScript scriptRead = scriptImpl.getScript(ContextFactory.getKernelUser(), script.getAddressURI().toString());
-        assertEquals(scriptWrite, scriptRead.getScript());
+        return script;
     }
 
     @Test
@@ -392,4 +397,71 @@ public class ScriptApiFileTest extends AbstractFileTest {
         ScriptResult ret = Kernel.getScript().runScriptExtended(ctx, script.getAddressURI().toString(), parameters);
         assertEquals("ABCD", ret.getReturnValue());
     }
+    
+    @Test
+    public void testRap4002() {
+        CallingContext callingContext = ContextFactory.getKernelUser();
+        Kernel.initBootstrap();
+
+        ScriptApi api = Kernel.getScript();
+
+        String clyde = "PacMan/Wocka/Wocka/Wocka/Inky/Pinky/Blinky/Clyde";
+        String sue = "PacMan/Wocka/Wocka/Wocka/Sue";
+        
+        putScript(clyde, "// Clyde");
+        putScript(sue, "// Sue");
+                
+        Map<String, RaptureFolderInfo> byPrefix;
+        byPrefix = api.listScriptsByUriPrefix(callingContext, auth+"/PacMan", 10);
+
+        StringBuilder sb = new StringBuilder();
+        if (byPrefix.size() != 8) {
+            for (String s : byPrefix.keySet()) {
+                sb.append(s).append("\n");
+            }
+        }
+        assertEquals(sb.toString(), 8, byPrefix.size());
+        String clydeExpect = new RaptureURI.Builder(Scheme.SCRIPT, auth).docPath(clyde).asString();
+        byPrefix = api.listScriptsByUriPrefix(callingContext, auth+"/PacMan/Wocka/Wocka/Wocka/Inky/Pinky/Blinky", 10);
+        assertEquals(1, byPrefix.size());
+        assertEquals(clydeExpect, byPrefix.keySet().toArray(new String[1])[0]);
+        
+        String authClyde = auth+"/"+clyde;
+        
+        byPrefix = api.listScriptsByUriPrefix(callingContext, authClyde, 10);
+        assertEquals(1, byPrefix.size());
+        assertEquals(clydeExpect, byPrefix.keySet().toArray(new String[1])[0]);
+
+        
+        List<String> deleted = api.deleteScriptsByUriPrefix(callingContext, authClyde, false);
+        assertEquals(1, deleted.size());
+
+        try {
+            RaptureScript scr = api.getScript(callingContext, authClyde);
+            // SHOULD FAIL OR DO NOTHING
+        } catch (Exception e) {
+            assertTrue(e.getMessage().equals("Series or folder "+authClyde+" does not exist"));
+        }
+        
+        Map<String, RaptureFolderInfo> docs = api.listScriptsByUriPrefix(callingContext, auth + "/PacMan", -1);
+        assertEquals(7, docs.size());
+        for (RaptureFolderInfo rfi : docs.values()) {
+            assertTrue(rfi.isFolder() || rfi.getName().equals("Sue"));
+        }
+        
+        putScript(clyde, "// Clyde");
+        deleted = api.deleteScriptsByUriPrefix(callingContext, authClyde, true);
+        assertEquals(4, deleted.size());
+        
+        try {
+            RaptureScript scr = api.getScript(callingContext, authClyde);
+            // SHOULD FAIL OR DO NOTHING
+        } catch (Exception e) {
+            assertTrue(e.getMessage().equals("Series or folder "+authClyde+" does not exist"));
+        }
+                
+        docs = api.listScriptsByUriPrefix(callingContext, auth + "/PacMan", -1);
+        assertEquals(4, docs.size());
+    }
+
 }
