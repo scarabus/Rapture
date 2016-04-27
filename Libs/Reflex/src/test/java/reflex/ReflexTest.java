@@ -82,4 +82,11 @@ public class ReflexTest extends ResourceBasedTest {
     public void testDate() throws RecognitionException {
         runTestFor("/date.rfx");
     }
+
+    @Test
+    public void testWhile() throws RecognitionException {
+        runTestFor("/while1.rfx");
+        runTestFor("/while2.rfx");
+        runTestFor("/while3.rfx");
+    }
 }
