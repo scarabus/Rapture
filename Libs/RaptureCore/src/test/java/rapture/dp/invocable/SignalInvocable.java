@@ -37,7 +37,7 @@ import rapture.common.dp.AbstractInvocable;
  * 
  * @author mel
  */
-public class SignalInvocable extends AbstractInvocable {
+public class SignalInvocable<T> extends AbstractInvocable<T> {
     private static Logger log = Logger.getLogger(SignalInvocable.class);
     private final String key;
     private final long delay;
@@ -65,17 +65,14 @@ public class SignalInvocable extends AbstractInvocable {
         static Set<String> on = Sets.newHashSet();
 
         synchronized static public void setSignal(String key) {
-            log.error("TEMPORARILY ADDED TO DEBUG SHIPPABLE TEST FAILURES : " + key + " SET");
             on.add(key);
         }
 
         synchronized static public void clearSignal(String key) {
-            log.error("TEMPORARILY ADDED TO DEBUG SHIPPABLE TEST FAILURES : " + key + " CLEARED");
             on.remove(key);
         }
 
         synchronized static public boolean testSignal(String key) {
-            log.error("TEMPORARILY ADDED TO DEBUG SHIPPABLE TEST FAILURES : " + key + ((on.contains(key) ? " +++IS+++ SET " : " ---IS NOT--- SET")));
             return on.contains(key);
         }
     }

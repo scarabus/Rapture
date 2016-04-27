@@ -27,19 +27,20 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import rapture.common.TableQueryResult;
-import rapture.common.dp.WorkOrder;
-import rapture.common.dp.WorkOrderStorage;
-import rapture.common.exception.ExceptionToString;
-import rapture.common.exception.RaptureException;
-import rapture.dsl.iqry.InvalidQueryException;
-import rapture.kernel.Kernel;
-
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import rapture.common.TableQueryResult;
+import rapture.common.dp.WorkOrder;
+import rapture.common.dp.WorkOrderStorage;
+import rapture.common.exception.ExceptionToString;
+import rapture.common.exception.RaptureException;
+import rapture.common.impl.jackson.JacksonUtil;
+import rapture.dsl.iqry.InvalidQueryException;
+import rapture.kernel.Kernel;
 
 public class MemoryIndexHandlerTest {
 
@@ -151,11 +152,11 @@ public class MemoryIndexHandlerTest {
     public void testQueryLt() throws Exception {
         String query = String.format("SELECT endTime, workOrderURI WHERE priority < \"%s\"", P3);
         TableQueryResult results = WorkOrderStorage.queryIndex(query);
-        assertEquals(2, results.getRows().size());
+        assertEquals("Expected 2 rows but got:\n" + JacksonUtil.jsonFromObject(results), 2, results.getRows().size());
 
         query = String.format("SELECT endTime, workOrderURI WHERE priority < \"%s\"", P4);
         results = WorkOrderStorage.queryIndex(query);
-        assertEquals(3, results.getRows().size());
+        assertEquals("Expected 3 rows but got:\n" + JacksonUtil.jsonFromObject(results), 3, results.getRows().size());
 
     }
 
@@ -163,11 +164,11 @@ public class MemoryIndexHandlerTest {
     public void testQueryNe() throws Exception {
         String query = String.format("SELECT endTime, workOrderURI WHERE priority != \"%s\"", P3);
         TableQueryResult results = WorkOrderStorage.queryIndex(query);
-        assertEquals(3, results.getRows().size());
+        assertEquals("Expected 3 rows but got:\n" + JacksonUtil.jsonFromObject(results), 3, results.getRows().size());
 
         query = String.format("SELECT endTime, workOrderURI WHERE priority != \"%s\"", P1);
         results = WorkOrderStorage.queryIndex(query);
-        assertEquals(2, results.getRows().size());
+        assertEquals("Expected 2 rows but got:\n" + JacksonUtil.jsonFromObject(results), 2, results.getRows().size());
     }
 
     @Test
@@ -203,7 +204,7 @@ public class MemoryIndexHandlerTest {
         String query = String.format("SELECT workOrderURI, startTime, priority WHERE priority < \"%s\" ORDER BY startTime", P4);
         TableQueryResult results = WorkOrderStorage.queryIndex(query);
         List<List<Object>> rows = results.getRows();
-        assertEquals(3, rows.size());
+        assertEquals("Expected 3 rows but got:\n" + JacksonUtil.jsonFromObject(rows), 3, rows.size());
     }
 
     @Test
@@ -211,7 +212,7 @@ public class MemoryIndexHandlerTest {
         String query = String.format("SELECT workOrderURI, startTime, priority WHERE priority < \"%s\" ORDER BY startTime ASC", P4);
         TableQueryResult results = WorkOrderStorage.queryIndex(query);
         List<List<Object>> rows = results.getRows();
-        assertEquals(3, rows.size());
+        assertEquals("Expected 3 rows but got:\n" + JacksonUtil.jsonFromObject(rows), 3, rows.size());
 
         assertEquals(U3, rows.get(0).get(0).toString());
         assertEquals(U2, rows.get(1).get(0).toString());
@@ -228,7 +229,7 @@ public class MemoryIndexHandlerTest {
         
         /* TableQueryResult */ results = WorkOrderStorage.queryIndex(query);
         List<List<Object>> rows = results.getRows();
-        assertEquals(3, rows.size());
+        assertEquals("Expected 3 rows but got:\n" + JacksonUtil.jsonFromObject(rows), 3, rows.size());
 
         assertEquals(U1, rows.get(0).get(0).toString());
         assertEquals(U2, rows.get(1).get(0).toString());
