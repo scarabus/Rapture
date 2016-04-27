@@ -23,7 +23,7 @@
  */
 package rapture.dp.invocable;
 
-public class HelloWorld extends SignalInvocable {
+public class HelloWorld<T> extends SignalInvocable<T> {
 
     public HelloWorld(String workerURI, String stepName) {
         super(workerURI, stepName, "Hello World", 0);
