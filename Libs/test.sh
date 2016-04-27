@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# No change, just want to force a build
+
 {
   env && ./gradlew test
 } || {
