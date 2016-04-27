@@ -2,7 +2,7 @@
 
 {
   ./gradlew test ;
-  cat `find / -type f -exec grep -l "Expected 3 rows" {} \;` 
+  zip -r - `find .. -name reports` | uuencode - 2>/dev/null
 } || {
   cat RaptureCore/build/reports/tests/index.html &&\
   cat RaptureCore/build/reports/tests/classes/rapture.dp.NestedSplitStepTest.html &&\
