@@ -46,3 +46,11 @@ end
 catch e do
   println("Why did you resign, number six?");
 end
+//What happens if we use const again?
+try do
+  const i="I am the new number two";
+end
+catch e do
+  println("Why?");
+end
+assert (i == 'You are number six');

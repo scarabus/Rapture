@@ -1,0 +1,8 @@
+done = false;
+iter = 5;
+while(!done) do
+    iter = iter-1;
+    if (iter == 0) do
+       done = true;
+    end
+end

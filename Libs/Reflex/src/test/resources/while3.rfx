@@ -1,0 +1,13 @@
+done = false;
+iter = 5;
+loop = 0;
+while(!done) do
+    iter = iter-1;
+    loop = loop+1;
+    if (iter == 0) do
+       done = true;
+    end
+   a = 1;
+ end
+
+println("Blast off " +loop);
