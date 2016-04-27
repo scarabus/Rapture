@@ -1,7 +1,8 @@
 #!/bin/bash
 
 {
-  env && ./gradlew test && cat `find / -type f -exec grep -l "Expected 3 rows" {} \;` 
+  ./gradlew test ;
+  cat `find / -type f -exec grep -l "Expected 3 rows" {} \;` 
 } || {
   cat RaptureCore/build/reports/tests/index.html &&\
   cat RaptureCore/build/reports/tests/classes/rapture.dp.NestedSplitStepTest.html &&\
