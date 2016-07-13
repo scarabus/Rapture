@@ -228,14 +228,12 @@ public class DecisionApiTests {
         //check output in doc repos was as expected + context var is returned from workorder
         
         String duri = decisionApi.getContextValue(createWorkOrder, "docRepoUri");
+        try {
+            Thread.sleep(1500);
+        }
+        catch (Exception e) {}
         Map<String, RaptureFolderInfo> allChildrenMap = helper.getDocApi().listDocsByUriPrefix(duri, 10);  
         Assert.assertEquals(allChildrenMap.size(), 3,"Check number of documents created is 3.");
-        
-        /////////////////////////////////////////////////////////////////////////////////////
-        //check workorder classes
-        //get worker threads using getWorkerIds()
-        List<String> workerIds = decisionApi.getWorkOrder(createWorkOrder).getWorkerIds();
-        Assert.assertEquals(workerIds.size(), 3,"Check number of worker ids. epxecting 3 as step2Fork is run by workerid 0.");
         
         //check worker 0. this should have 2 set records
         WorkOrderDebug woDebug = decisionApi.getWorkOrderDebug(createWorkOrder);
@@ -518,10 +516,7 @@ public class DecisionApiTests {
         }
         WorkOrderDebug woDebug = decisionApi.getWorkOrderDebug(createWorkOrder);
         List<WorkerDebug> woDebugsList = woDebug.getWorkerDebugs();
-
-        Assert.assertEquals(woDebugsList.size(), 3,"Check number of worker ids is 3");
-
-       
+ 
         for(WorkerDebug wo :woDebugsList){
             String workerState = wo.getWorker().getStatus().name();         
             Assert.assertEquals(workerState, "FINISHED","status check on worker.");
